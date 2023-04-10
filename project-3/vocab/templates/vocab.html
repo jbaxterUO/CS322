@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+   <head>
+      <!-- Using Bootstrap, so that we're `responsive`! -->
+      <!-- Bootstrap requires the following three meta tags to fully function -->
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <!-- Javascript and Cascading Style Sheets (css) libraries -->
+      <!-- mostly from content delivery networks                 -->
+      <!-- jquery; CDN load is usually quick because it's likely cached -->
+      <script type="text/javascript"
+         src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+      <!-- 12 column grid rearranges itself for smaller screens or windows. -->
+      <!-- This project is using an older version, make sure to check out newer versions! -->
+      <!-- http://getbootstrap.com/getting-started/  -->
+      <!-- Compiled and minified CSS -->
+      <link rel="stylesheet"
+         href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+         integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7"
+         crossorigin="anonymous">
+      <!-- Compiled and minified JavaScript -->
+      <script
+         src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"
+         integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS"
+         crossorigin="anonymous"></script>
+      <!-- Let's set our title! -->
+      <title>Vocabulary Anagram</title>
+      <!-- Our own css file.  Note how we can link directly here and not -->
+      <!-- write any routing code in the Flask application. -->
+      <link rel="stylesheet" href="/static/jumble.css" />
+   </head>
+   <body>
+      <div class="container">
+         <div class="row">
+            <div class="col-xs-6 text-center">
+               <h1>Words</h1>
+            </div>
+         </div>
+         <!-- Vocabularly words layed out in 6 columns;
+             bootstrap may collapse to fewer columns and
+             more rows if the window is narrow.
+            -->
+         <div class="row">
+            {% for word in g.vocab %}
+            <div class="col-xs-2 text-center"> {{ word }} </div>
+            {% if loop.index is divisibleby 3 %}
+         </div>
+         <!-- row -->
+         <div class="row">
+            {% endif %}
+            {% endfor %}
+         </div>
+         <!-- row -->
+         <br />
+         <div class="row">
+            <div class="col-xs-6 text-center">
+               Use letters from
+            </div>
+         </div>
+         <div class="row">
+            <div class="col-xs-6 text-center lead">
+               <strong>{{ session.jumble }}</strong>
+            </div>
+         </div>
+         <div class="row">
+            <div class="col-xs-6 text-center">
+               to spell {{session.target_count}} words from the list.
+            </div>
+            <!-- col -->
+         </div>
+         <!-- row -->
+         <br />
+         <div class="row">
+            <div class="col-xs-6 text-center">
+               <h5><p id="message"> </p></h5>
+               <form id="entry">
+                  <label for="attempt">Word:</label>
+                  <input id="attempt" name="attempt" type="text" width="15"
+                     autocomplete="off"  autofocus />
+               </form>
+            </div>
+         </div>
+         <b>Found Words:</b>
+         <h3><p id="results"> </p></h3>
+         <script>
+            $("#entry").submit( function(event) {
+               event.preventDefault();
+            });
+
+             //***Segment for checking up keyup events taken from minijax.py, credit to the author***
+             $("#attempt").keyup(function(event) {
+               var txt = $("#attempt").val();  // Current content of the input field
+               var keycode = event.which;      // They key that just went up
+               var letter = String.fromCharCode(keycode);
+
+               // That letter might not be a letter ... it could be the
+               // the backspace key, or even the shift key, because 'keyup'
+               // catches all kinds of keys.  (Also, the difference between
+               // upper and lower case comes from state of shift key + key code,
+               // so ignoring the shift key we get only the upper case letters.
+
+               if (! "ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(letter)) { return }
+
+               $.getJSON( "/_check", { text: txt },
+                          function(data) {
+                            //Get game status
+                            gameOver = data.gameOver.gameOver;
+                            
+                            if(!gameOver){
+                              //Get message to display to user
+                              message = data.message.message;
+
+                              //Output message, every input requires some response
+                              $("#message").html(message);
+
+                              //Get variable that checks if the submission was a full word in
+                              //the word list. If the submission was a full word then clear the //form
+                              word = data.isWord.word;
+ 
+                              //If the game is still going but a word was found clear form
+                              if (word) {
+                                 $("#attempt").val("");
+                                 //Print found words if new word was found
+                                 newWord = data.newWord.newWord
+                                 if(newWord){
+                                    wordList = data.wordList.wordList;
+                                    $("#results").html(wordList + "   ");
+                                 }
+                              }
+                               
+                            }
+                            //If game is over direct page to current path/sucess
+                            else{
+                              location.href = '/success';
+                            }
+
+                           }
+                       );
+               });
+
+         </script>
+         <br />
+      </div>
+      <!-- container -->
+   </body>
+</html>
